@@ -1,10 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 import  { NextFunction, Request, Response } from "express";
 import { envVars } from "../config/env";
 import AppError from "../errorHelpers/AppError";
+import { StatusCodes } from "http-status-codes";
+import mongoose from "mongoose";
+import { handlerDuplicateError } from "../helpers/handleDuplicateError";
+import { handleValidationError } from "../helpers/handleValidation";
+import { handlerCastError } from "../helpers/handleCastError";
+import { handlerZodError } from "../helpers/handleZodError";
+import { TErrorSources } from "../interfaces/error.types";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export const globalErrorHandler = (err: any , req:Request, res: Response, next: NextFunction) =>{
   /*
   * duplicate error 
@@ -13,47 +21,49 @@ export const globalErrorHandler = (err: any , req:Request, res: Response, next: 
 
   */
 
-  const errorSources : any = [
+  if(envVars.NODE_ENV !== "development"){
+    console.log(err);
+  }
+
+  let  errorSources : TErrorSources[] = [
 
   ]
 
-
-
            let statusCode =500
            let message =`something went wrong !!`
-           
-           //duplicate error
+
+
+       //duplicate error
+
            if(err.code === 11000){
              console.log("Duplicate error", err.message); 
-           const duplicate = err.message.match(/"([^"]*)"/ )
-           console.log(duplicate);
-             statusCode = 400;
-             message = `${duplicate[1]} already exists !!!`;
+            const simplifiedError  = handlerDuplicateError(err)
+             statusCode = simplifiedError.statusCode;
+             message =  simplifiedError.message
            } 
 
            // Object Id error / cast error
             else if(err.name === "CastError"){
-                  statusCode =400;
-                  message = "Invalid Mongodb ObjectID. Please provide a valid id" 
+              const simplifiedError = handlerCastError(err)
+                  statusCode =simplifiedError.statusCode;
+                  message = simplifiedError.message;
             }
             // Zod error
             else if(err.name === "ZodError") {
-                statusCode = 400
-                message = "Zod Error" 
-                console.log(err.issues);
-                err.issues.forEach((issue : any) => {
-                    
-                })
+              const simplifiedError = handlerZodError(err)
+              statusCode = simplifiedError.statusCode
+              message =  simplifiedError.message
+              errorSources = simplifiedError.errorSources as TErrorSources[]  
             }
+            
+
           // Mongoose Validation Error
+
             else if(err.name === "ValidationError"){
-                statusCode = 400;
-                const errors = Object.values(err.error )
-                errors.forEach((errorObject: any) => errorSources.push({
-                    path: errorObject.path,
-                    message: errorObject.message
-                }))
-                message = "Validation Error"
+              const simplifiedError = handleValidationError(err)
+                statusCode = simplifiedError.statusCode;
+                errorSources = simplifiedError.errorSources as TErrorSources[];
+                message = simplifiedError.message
             }
 
            
@@ -69,8 +79,9 @@ export const globalErrorHandler = (err: any , req:Request, res: Response, next: 
 
            res.status(statusCode).json({
             success: false,
-            message, 
-            err,
+            message,
+            errorSources, 
+            err : envVars.NODE_ENV === "development" ? err:null,
             stack: envVars.NODE_ENV === "development" ? err.stack : null
         })
 }
