@@ -11,8 +11,14 @@ router.post('/refresh-token', AuthControllers.getNewAccessToken)
 router.post("/logout", AuthControllers.logout)
 router.post("/reset-password", checkAuth(...Object.values(Role)), AuthControllers.resetPassword)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+
+//  /booking -> /login -> successful google login -> / booking frontend
+// /login -> successful google login -> /frontend
 router.get('/google', async(req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate("google", {scope: ["profile", "email"]})(req, res , next)
+    
+     const redirect = req.query.redirect || "/"
+    passport.authenticate("google", {scope: ["profile", "email"], state: redirect as string})(req, res , next)
 })
 
 router.get("/google/callback" , passport.authenticate("google", {failureRedirect: "/login"})  ,AuthControllers.googleCallBackController)

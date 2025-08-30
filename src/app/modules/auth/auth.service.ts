@@ -11,39 +11,39 @@ import { JwtPayload } from "jsonwebtoken";
 
 
 
-const  credentialsLogin = async (payload : Partial <IUser>) =>{
-    const {email, password}= payload;
+// const  credentialsLogin = async (payload : Partial <IUser>) =>{
+//     const {email, password}= payload;
 
-    const isUserExist = await User.findOne({email})
+//     const isUserExist = await User.findOne({email})
 
 
-    if(!isUserExist) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Email does not exist")
-    }
+//     if(!isUserExist) {
+//         throw new AppError(httpStatus.BAD_REQUEST, "Email does not exist")
+//     }
 
-    const isPasswordMatched = await bcryptjs.compare(password as string, isUserExist.password as string  )
-    if(!isPasswordMatched){
-        throw new AppError(httpStatus.BAD_REQUEST, "Incorrect Password")
-    }
+//     const isPasswordMatched = await bcryptjs.compare(password as string, isUserExist.password as string  )
+//     if(!isPasswordMatched){
+//         throw new AppError(httpStatus.BAD_REQUEST, "Incorrect Password")
+//     }
 
-    // const jwtPayload = {
-    //         userId: isUserExist._id,
-    //     email: isUserExist.email,
-    //     role: isUserExist.role
-    // }
+//     // const jwtPayload = {
+//     //         userId: isUserExist._id,
+//     //     email: isUserExist.email,
+//     //     role: isUserExist.role
+//     // }
 
-    //  const accessToken = generateToken(jwtPayload, envVars.JWT_ACCESS_SECRET, envVars.JWT_ACCESS_EXPIRES)
-    //  const refreshToken = generateToken(jwtPayload, envVars.JWT_REFRESH_SECRET, envVars.JWT_REFRESH_EXPIRES)
+//     //  const accessToken = generateToken(jwtPayload, envVars.JWT_ACCESS_SECRET, envVars.JWT_ACCESS_EXPIRES)
+//     //  const refreshToken = generateToken(jwtPayload, envVars.JWT_REFRESH_SECRET, envVars.JWT_REFRESH_EXPIRES)
 
-    const userTokens = createUserTokens(isUserExist)
+//     const userTokens = createUserTokens(isUserExist)
 
-    const { password : pass, ...rest} = isUserExist.toObject()
-    return {
-        accessToken : userTokens.accessToken,
-        refreshToken : userTokens.refreshToken,
-        user: rest
-    }
-}
+//     const { password : pass, ...rest} = isUserExist.toObject()
+//     return {
+//         accessToken : userTokens.accessToken,
+//         refreshToken : userTokens.refreshToken,
+//         user: rest
+//     }
+// }
 
 const getNewAccessToken =  async(refreshToken : string) => {
     const newAccessToken =await createNewAccessTokenWithRefreshToken(refreshToken)
@@ -66,7 +66,7 @@ const resetPassword =  async(oldPassword: string, newPassword: string, decodedTo
 }
 //user - login -token (email, role, _id) -booking/payment/ payment cancel -token
 export const AuthServices = {
-    credentialsLogin,
+ 
     getNewAccessToken,
     resetPassword
 }
